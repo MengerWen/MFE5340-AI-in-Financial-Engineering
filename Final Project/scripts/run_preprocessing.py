@@ -31,8 +31,9 @@ def main() -> None:
     )
     validate_preprocess_config(config)
     print(f"Preprocessing config is valid: {config}")
-    print("Panel construction is intentionally deferred to Stage 2.")
+    print("Use scripts/build_panel.py to build the Stage 2 cleaned panel artifact.")
 
 
 if __name__ == "__main__":
     main()
+

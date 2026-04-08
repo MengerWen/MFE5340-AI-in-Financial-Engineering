@@ -51,3 +51,21 @@ These commands validate structure and defaults only. Later stages should replace
 ## Next Stage
 
 Stage 2 should begin by installing the environment, loading each raw data object, documenting exact schemas, and building a reproducible point-in-time monthly panel for the `features500/` main specification.
+
+## Stage 2 Data Panel
+
+Use the Anaconda interpreter that has the data stack installed:
+
+```powershell
+& "d:\MG\anaconda3\python.exe" scripts/inspect_data.py
+& "d:\MG\anaconda3\python.exe" scripts/build_panel.py --config configs/cleaning_features500.yaml
+```
+
+Stage 2 outputs:
+
+- `outputs/metadata/data_inspection_stage2.json`
+- `outputs/panels/main_features500_panel.pkl`
+- `outputs/metadata/main_features500_panel_metadata.json`
+- `reports/data_audit_stage2.md`
+
+The main-spec panel uses `features500/`, CSI 500 membership at month `t`, and next-month returns from `monthly_returns.pkl` as the target.
