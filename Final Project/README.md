@@ -41,12 +41,13 @@ Run these from `Final Project/`:
 & "d:\MG\anaconda3\python.exe" scripts/build_panel.py --config configs/cleaning_features500.yaml
 & "d:\MG\anaconda3\python.exe" scripts/evaluate.py
 & "d:\MG\anaconda3\python.exe" scripts/list_benchmarks.py
+& "d:\MG\anaconda3\python.exe" scripts/train_benchmarks.py --config configs/benchmarks_features500.yaml
 & "d:\MG\anaconda3\python.exe" scripts/build_graph.py
 & "d:\MG\anaconda3\python.exe" scripts/train.py
 & "d:\MG\anaconda3\python.exe" scripts/backtest_portfolio.py
 ```
 
-`inspect_data.py` and `build_panel.py` are the main Stage 2 data commands. `build_graph.py`, `train.py`, and `backtest_portfolio.py` currently validate configs and expose reusable helper modules; full graph modeling, neural training, and portfolio backtesting are reserved for later stages.
+`inspect_data.py` and `build_panel.py` are the main Stage 2 data commands. `train_benchmarks.py` is the Stage 3 non-graph benchmark command for MLP, IPCA-style, and CAE-style models. `build_graph.py`, `train.py`, and `backtest_portfolio.py` currently validate configs and expose reusable helper modules; full graph modeling and portfolio backtesting are reserved for later stages.
 
 The panel builder writes:
 
@@ -55,8 +56,19 @@ The panel builder writes:
 - `outputs/metadata/main_features500_panel_metadata.json`
 - `reports/data_audit_stage2.md`
 
+The Stage 3 benchmark runner writes:
+
+- `outputs/predictions/stage3_non_graph_predictions.pkl`
+- `outputs/latent/stage3_non_graph_exposures.pkl`
+- `outputs/latent/stage3_non_graph_factors.pkl`
+- `outputs/metrics/stage3_non_graph_metrics.csv`
+- `outputs/metadata/stage3_non_graph_run_metadata.json`
+- `reports/benchmark_definitions_stage3.md`
+
 ## Panel Logic
 
 The main-spec panel uses `features500/`, CSI 500 membership at month `t`, and next-month returns from `monthly_returns.pkl` as the target. `target_excess_return` subtracts the compounded daily risk-free return over month `t + 1`.
 
 Feature cleaning uses pandas/numpy operations by month: robust clipping, cross-sectional median imputation, and cross-sectional normalization. Graph utilities can convert return-correlation kNN edges into networkx graphs and torch_geometric `Data` objects. Torch utilities set reproducible seeds, select CUDA when available, and prepare TensorBoard logging.
+
+
