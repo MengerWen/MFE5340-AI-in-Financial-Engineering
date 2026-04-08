@@ -1,4 +1,4 @@
-﻿"""Graph construction helpers using pandas, scikit-learn, and networkx."""
+﻿"""Graph construction helpers using pandas, scikit-learn, networkx, and PyG."""
 
 from __future__ import annotations
 
@@ -7,7 +7,9 @@ from dataclasses import dataclass
 import networkx as nx
 import numpy as np
 import pandas as pd
+import torch
 from sklearn.neighbors import NearestNeighbors
+from torch_geometric.data import Data
 
 
 @dataclass(frozen=True)
@@ -32,16 +34,7 @@ def validate_graph_spec(spec: GraphSpec) -> None:
 
 
 def correlation_knn_edges(returns_window: pd.DataFrame, spec: GraphSpec) -> pd.DataFrame:
-    """Build undirected kNN edges from a stock return correlation matrix.
-
-    Parameters
-    ----------
-    returns_window:
-        Wide stock return DataFrame with dates as rows and stock ids as columns.
-    spec:
-        Graph configuration. Missing returns are filled with each stock's window
-        median before computing correlations.
-    """
+    """Build undirected kNN edges from a stock return correlation matrix."""
 
     validate_graph_spec(spec)
     if returns_window.empty:
@@ -79,8 +72,52 @@ def edges_to_networkx(edges: pd.DataFrame) -> nx.Graph:
     return graph
 
 
+def edges_to_pyg_data(edges: pd.DataFrame, node_features: pd.DataFrame) -> Data:
+    """Convert edge and node feature DataFrames into a torch_geometric Data object.
+
+    `node_features` must be indexed by stock id and contain numeric columns.
+    """
+
+    if not {"source", "target"}.issubset(edges.columns):
+        raise KeyError("edges must contain source and target columns")
+    if node_features.empty:
+        raise ValueError("node_features must be non-empty")
+
+    features = node_features.apply(pd.to_numeric, errors="coerce").fillna(0.0).astype("float32")
+    stock_ids = pd.Index(features.index.astype(str), name="stock_id")
+    node_lookup = {stock: pos for pos, stock in enumerate(stock_ids)}
+    usable_edges = edges.loc[edges["source"].isin(node_lookup) & edges["target"].isin(node_lookup)].copy()
+    if usable_edges.empty:
+        raise ValueError("no edges connect stocks present in node_features")
+
+    edge_pairs = np.asarray(
+        [
+            [node_lookup[source], node_lookup[target]]
+            for source, target in usable_edges[["source", "target"]].itertuples(index=False, name=None)
+        ],
+        dtype=np.int64,
+    ).T
+    reverse_pairs = edge_pairs[::-1]
+    edge_index = torch.as_tensor(np.concatenate([edge_pairs, reverse_pairs], axis=1), dtype=torch.long)
+
+    if "weight" in usable_edges:
+        weights = usable_edges["weight"].to_numpy(dtype=np.float32)
+        edge_weight = torch.as_tensor(np.concatenate([weights, weights]), dtype=torch.float32)
+    else:
+        edge_weight = torch.ones(edge_index.shape[1], dtype=torch.float32)
+
+    data = Data(
+        x=torch.as_tensor(features.to_numpy(), dtype=torch.float32),
+        edge_index=edge_index,
+        edge_weight=edge_weight,
+    )
+    data.stock_ids = list(stock_ids)
+    return data
+
+
 def build_graph_snapshot(*_args: object, spec: GraphSpec | None = None, **_kwargs: object) -> object:
     """Validate settings; full rolling graph snapshots are reserved for graph modeling."""
 
     validate_graph_spec(spec or GraphSpec())
     raise NotImplementedError("Rolling graph snapshots are reserved for the graph modeling stage.")
+

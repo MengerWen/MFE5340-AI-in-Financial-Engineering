@@ -1,4 +1,4 @@
-﻿"""Stage 1 preprocessing entry point.
+﻿"""Preprocessing configuration validation entry point.
 
 This validates the intended configuration but does not build a panel yet.
 """
@@ -36,4 +36,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 

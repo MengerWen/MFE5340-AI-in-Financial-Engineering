@@ -1,4 +1,4 @@
-﻿"""Benchmark model registry backed by pandas-friendly metadata."""
+﻿"""Benchmark registry with pandas metadata and torch backend hints."""
 
 from __future__ import annotations
 
@@ -16,14 +16,16 @@ class BenchmarkSpec:
     family: str
     uses_graph: bool
     asset_pricing_role: str
+    backend: str
+    module_hint: str
 
 
 BENCHMARKS: tuple[BenchmarkSpec, ...] = (
-    BenchmarkSpec("ipca", "linear latent factor", False, "conditional beta benchmark"),
-    BenchmarkSpec("conditional_autoencoder", "nonlinear latent factor", False, "nonlinear conditional beta benchmark"),
-    BenchmarkSpec("mlp_predictor", "direct prediction", False, "non-graph nonlinear prediction benchmark"),
-    BenchmarkSpec("gcn_latent_factor", "graph latent factor", True, "graph-enhanced conditional beta model"),
-    BenchmarkSpec("gat_latent_factor", "graph latent factor", True, "attention-based graph conditional beta model"),
+    BenchmarkSpec("ipca", "linear latent factor", False, "conditional beta benchmark", "linearmodels/sklearn", "panel/factor baseline"),
+    BenchmarkSpec("conditional_autoencoder", "nonlinear latent factor", False, "nonlinear conditional beta benchmark", "torch", "ConditionalBetaMLP"),
+    BenchmarkSpec("mlp_predictor", "direct prediction", False, "non-graph nonlinear prediction benchmark", "torch", "MLPReturnPredictor"),
+    BenchmarkSpec("gcn_latent_factor", "graph latent factor", True, "graph-enhanced conditional beta model", "torch_geometric", "GraphConditionalEncoder(model_type='gcn')"),
+    BenchmarkSpec("gat_latent_factor", "graph latent factor", True, "attention-based graph conditional beta model", "torch_geometric", "GraphConditionalEncoder(model_type='gat')"),
 )
 
 
@@ -40,10 +42,10 @@ def benchmark_registry() -> dict[str, BenchmarkSpec]:
 
 
 class BenchmarkModel(BaseEstimator):
-    """Minimal scikit-learn-style estimator interface for later models."""
+    """Minimal scikit-learn-style estimator interface for non-torch baselines."""
 
     def fit(self, *_args: object, **_kwargs: object) -> "BenchmarkModel":
-        raise NotImplementedError("Model fitting is intentionally deferred beyond Stage 2.")
+        raise NotImplementedError("Model fitting is reserved for the modeling stage.")
 
     def predict(self, *_args: object, **_kwargs: object) -> object:
-        raise NotImplementedError("Prediction is intentionally deferred beyond Stage 2.")
+        raise NotImplementedError("Prediction is reserved for the modeling stage.")

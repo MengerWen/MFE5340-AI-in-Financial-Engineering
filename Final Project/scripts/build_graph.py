@@ -1,8 +1,4 @@
-﻿"""Stage 1 graph-construction entry point.
-
-This validates graph settings only. Graph snapshots require point-in-time panels
-and are intentionally deferred to later stages.
-"""
+﻿"""Validate graph construction settings for networkx and PyG graphs."""
 
 from __future__ import annotations
 
@@ -35,10 +31,9 @@ def main() -> None:
         include_industry_edges=args.include_industry_edges,
     )
     validate_graph_spec(spec)
-    print(f"Graph spec is valid: {spec}")
+    print(f"Graph spec is valid for pandas/sklearn -> networkx/PyG conversion: {spec}")
     print("Rolling graph construction is reserved for the graph modeling stage.")
 
 
 if __name__ == "__main__":
     main()
-

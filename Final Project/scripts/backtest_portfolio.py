@@ -1,7 +1,4 @@
-﻿"""Stage 1 portfolio-backtesting entry point.
-
-This validates portfolio settings only; it does not construct portfolios yet.
-"""
+﻿"""Validate pandas/numpy portfolio backtesting settings."""
 
 from __future__ import annotations
 
@@ -30,10 +27,9 @@ def main() -> None:
         long_only_count=args.long_only_count,
     )
     validate_portfolio_config(config)
-    print(f"Portfolio config is valid: {config}")
+    print(f"Portfolio config is valid for pandas/numpy backtesting helpers: {config}")
     print("Full portfolio backtesting is reserved for the portfolio stage.")
 
 
 if __name__ == "__main__":
     main()
-

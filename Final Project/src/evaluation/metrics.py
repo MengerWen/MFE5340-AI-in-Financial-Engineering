@@ -1,4 +1,4 @@
-﻿"""Evaluation metrics implemented with pandas, numpy, and scikit-learn."""
+﻿"""Evaluation metrics with pandas, numpy, scikit-learn, and linearmodels."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
+from linearmodels.panel import PanelOLS
 from sklearn.metrics import r2_score
 
 
@@ -26,14 +27,14 @@ def metric_catalog() -> pd.DataFrame:
 
     return pd.DataFrame(
         [
-            {"metric": "oos_r2", "stage": "prediction", "description": "Out-of-sample R2 for return forecasts"},
-            {"metric": "rank_ic", "stage": "prediction", "description": "Monthly Spearman rank correlation"},
-            {"metric": "pricing_error", "stage": "asset_pricing", "description": "Cross-sectional pricing error"},
-            {"metric": "long_short_return", "stage": "portfolio", "description": "Long-short realized portfolio return"},
-            {"metric": "long_only_return", "stage": "portfolio", "description": "Long-only realized portfolio return"},
-            {"metric": "sharpe_ratio", "stage": "portfolio", "description": "Annualized Sharpe ratio"},
-            {"metric": "max_drawdown", "stage": "portfolio", "description": "Maximum drawdown"},
-            {"metric": "turnover", "stage": "portfolio", "description": "Portfolio turnover"},
+            {"metric": "oos_r2", "stage": "prediction", "backend": "sklearn", "description": "Out-of-sample R2 for return forecasts"},
+            {"metric": "rank_ic", "stage": "prediction", "backend": "pandas", "description": "Monthly Spearman rank correlation"},
+            {"metric": "pricing_error", "stage": "asset_pricing", "backend": "linearmodels", "description": "Cross-sectional/panel pricing error"},
+            {"metric": "long_short_return", "stage": "portfolio", "backend": "pandas", "description": "Long-short realized portfolio return"},
+            {"metric": "long_only_return", "stage": "portfolio", "backend": "pandas", "description": "Long-only realized portfolio return"},
+            {"metric": "sharpe_ratio", "stage": "portfolio", "backend": "numpy", "description": "Annualized Sharpe ratio"},
+            {"metric": "max_drawdown", "stage": "portfolio", "backend": "pandas", "description": "Maximum drawdown"},
+            {"metric": "turnover", "stage": "portfolio", "backend": "pandas", "description": "Portfolio turnover"},
         ]
     )
 
@@ -95,3 +96,41 @@ def max_drawdown(monthly_returns: Iterable[float] | pd.Series) -> float:
     wealth = (1.0 + returns).cumprod()
     drawdown = wealth / wealth.cummax() - 1.0
     return float(drawdown.min())
+
+
+def panel_pricing_regression(
+    frame: pd.DataFrame,
+    y_col: str,
+    x_cols: list[str],
+    entity_col: str = "stock_id",
+    time_col: str = "date",
+    entity_effects: bool = True,
+    time_effects: bool = True,
+) -> pd.Series:
+    """Fit a simple PanelOLS pricing diagnostic with linearmodels.
+
+    This helper is for diagnostics and robustness checks, not the final IPCA
+    implementation.
+    """
+
+    required = [entity_col, time_col, y_col, *x_cols]
+    missing = [col for col in required if col not in frame.columns]
+    if missing:
+        raise KeyError(f"missing columns: {missing}")
+    panel = frame[required].dropna().copy()
+    if panel.empty:
+        raise ValueError("panel regression data is empty")
+    panel[time_col] = pd.to_datetime(panel[time_col])
+    panel = panel.set_index([entity_col, time_col]).sort_index()
+    y = panel[y_col]
+    x = panel[x_cols]
+    result = PanelOLS(y, x, entity_effects=entity_effects, time_effects=time_effects, check_rank=False).fit(cov_type="clustered", cluster_entity=True)
+    return pd.Series(
+        {
+            "nobs": result.nobs,
+            "rsquared": result.rsquared,
+            "rsquared_within": result.rsquared_within,
+            "loglik": result.loglik,
+        },
+        name="panel_pricing_regression",
+    )

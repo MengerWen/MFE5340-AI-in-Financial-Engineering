@@ -52,7 +52,7 @@ class PanelBuildResult:
 
 
 
-# Backwards-compatible names for the Stage 1 validation script.
+# Backwards-compatible names for the lightweight validation script.
 PreprocessConfig = CleaningConfig
 
 
@@ -374,5 +374,6 @@ def build_monthly_panel(config: CleaningConfig, root: Path | None = None) -> Pan
         json.dump(metadata, fh, indent=2, ensure_ascii=False, default=_json_default)
 
     return PanelBuildResult(panel_path=panel_path, metadata_path=metadata_path, metadata=metadata)
+
 
 
