@@ -1,0 +1,65 @@
+price.h5
+
+These are the daily adjusted close prices of stocks. The daily frequency of this data allows for the construction of price/return-related factors with more granular data.
+
+
+
+BLACKLIST.pkl
+
+This dataset is a blacklist of assets by date in pickle format. It contains two index levels: `date` and `asset`, with no additional columns. Each row represents a specific asset (e.g., "000001.SZ") on a particular date, marking it as "blacklisted" on that date. The `date` index represents the day when the asset was added to the blacklist, while the `asset` index specifies the stock symbol. This data can be used to filter out certain assets from analysis or backtesting based on their blacklist status on specific dates.
+
+
+
+UNTRADABLE.pkl
+
+This dataset is an untradable asset record by date in pickle format. It has two index levels: `date` and `asset`, with no additional columns. Each row indicates an asset (e.g., "600602.SH") that was deemed "untradable" on a specific date. The `date` index represents the day when the asset was classified as untradable, while the `asset` index lists the stock symbols affected. This data can be used to exclude these assets from analysis or trading simulations on the specified dates.
+
+
+
+FF5.csv
+
+This dataset is the Fama-French Five Factors (FF5) monthly data, saved in CSV format. It contains five columns, each representing one of the factors. Each row represents the monthly excess returns for these factors, with the `date` index indicating the last trading day of each month. You can load it by using: data = pd.read_csv('FF5.csv', parse_dates=True, index_col=0)
+
+
+
+HXZ.csv
+
+This dataset is the Hou-Xue-Zhang Four Factors (HXZ) monthly data, saved in CSV format. It contains five columns, each representing one of the factors. Each row represents the monthly excess returns for these factors, with the `date` index indicating the last trading day of each month. You can load it by using: data = pd.read_csv('HXZ.csv', parse_dates=True, index_col=0)
+
+
+
+mcap.pkl
+
+This is a dataframe that contains the market capitalizations for all Chinese stock markets (excluding Beijing stock exchange). The data frequency is monthly.
+
+
+
+csi500_mask_monthly.pkl_
+
+This dataset, named csi500_mask_monthly.pkl, contains monthly membership information for stocks in the CSI 500 Index. Here's the structure:
+
+- Index (date): Each row corresponds to the last trading day of a month, spanning from January 2007 to September 2024.
+- Columns (stock): Each column represents a stock in the CSI 500, identified by its ticker symbol (e.g., `000005.SZ`, `600000.SH`).
+- Values (True/False): A `True` value indicates that the stock was a constituent of the CSI 500 Index for that month, while a `False` value indicates it was not.
+
+This data can be used as a mask to filter stocks that are part of the CSI 500 in any given month.
+
+
+
+
+monthly_returns.pkl
+
+This DataFrame (`monthly_returns.pkl`) contains monthly return data for various stocks, with each column representing a stock (identified by stock symbols like `000001.SZ`, `000002.SZ`, etc.) and each row representing the monthly returns.
+
+
+
+
+features.7z and features500.7z
+
+The file `features.7z` is a compressed archive containing over 200 precomputed firm characteristics, each at a monthly frequency. Here are some key details about this data:
+
+1. Data Availability: Due to varying computation methods and data availability, not all firm characteristics have the same coverage. This is a realistic aspect of working with financial data in real-world scenarios.
+   
+2. Predictive Information: Not every feature necessarily contains predictive information related to A-share returns. Part of your project involves identifying which features are informative.
+
+Similarly, `features500.7z` contains comparable data but has already been filtered using the CSI 500 filter at each month-end. This means that only companies included in the CSI 500 index for that month are present in `features500.7z`.
