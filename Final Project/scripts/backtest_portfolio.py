@@ -31,8 +31,9 @@ def main() -> None:
     )
     validate_portfolio_config(config)
     print(f"Portfolio config is valid: {config}")
-    print("Portfolio backtesting is intentionally deferred beyond Stage 1.")
+    print("Full portfolio backtesting is reserved for the portfolio stage.")
 
 
 if __name__ == "__main__":
     main()
+

@@ -36,8 +36,9 @@ def main() -> None:
     )
     validate_graph_spec(spec)
     print(f"Graph spec is valid: {spec}")
-    print("Graph construction is intentionally deferred to a later stage.")
+    print("Rolling graph construction is reserved for the graph modeling stage.")
 
 
 if __name__ == "__main__":
     main()
+

@@ -1,12 +1,11 @@
-﻿"""Benchmark model registry.
-
-These are interfaces only. Actual estimators should be implemented in later
-stages after the point-in-time panel is finalized.
-"""
+﻿"""Benchmark model registry backed by pandas-friendly metadata."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+
+import pandas as pd
+from sklearn.base import BaseEstimator
 
 
 @dataclass(frozen=True)
@@ -28,17 +27,23 @@ BENCHMARKS: tuple[BenchmarkSpec, ...] = (
 )
 
 
+def benchmark_frame() -> pd.DataFrame:
+    """Return benchmark metadata as a pandas DataFrame."""
+
+    return pd.DataFrame([spec.__dict__ for spec in BENCHMARKS])
+
+
 def benchmark_registry() -> dict[str, BenchmarkSpec]:
-    """Return benchmarks keyed by name."""
+    """Return benchmarks keyed by name for config lookup."""
 
     return {spec.name: spec for spec in BENCHMARKS}
 
 
-class BenchmarkModel:
-    """Minimal estimator interface shared by later benchmark implementations."""
+class BenchmarkModel(BaseEstimator):
+    """Minimal scikit-learn-style estimator interface for later models."""
 
     def fit(self, *_args: object, **_kwargs: object) -> "BenchmarkModel":
-        raise NotImplementedError("Model fitting is intentionally deferred beyond Stage 1.")
+        raise NotImplementedError("Model fitting is intentionally deferred beyond Stage 2.")
 
     def predict(self, *_args: object, **_kwargs: object) -> object:
-        raise NotImplementedError("Prediction is intentionally deferred beyond Stage 1.")
+        raise NotImplementedError("Prediction is intentionally deferred beyond Stage 2.")

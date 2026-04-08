@@ -37,8 +37,9 @@ def main() -> None:
     )
     validate_training_protocol(protocol)
     print(f"Training protocol is valid: {protocol}")
-    print("Actual training is intentionally deferred beyond Stage 1.")
+    print("Actual training is reserved for the modeling stage.")
 
 
 if __name__ == "__main__":
     main()
+

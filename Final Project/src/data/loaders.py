@@ -1,15 +1,12 @@
-﻿"""Utilities for locating and lightly inspecting project data.
-
-Stage 1 deliberately avoids assuming detailed pickle schemas. Later stages
-should load the raw objects after the environment is installed and document
-their index/column structure before building panels.
-"""
+﻿"""Pandas-based utilities for locating and inspecting project data."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+import pandas as pd
 
 
 EXPECTED_DATA_ROLES: dict[str, str] = {
@@ -59,16 +56,7 @@ def get_project_paths(root: Path | None = None) -> ProjectPaths:
 
 
 def list_feature_files(universe: str = "features500", root: Path | None = None) -> list[Path]:
-    """List characteristic files for a universe folder.
-
-    Parameters
-    ----------
-    universe:
-        Either ``features500`` for the main CSI 500 spec or ``features`` for
-        the broader robustness spec.
-    root:
-        Optional project root override.
-    """
+    """List characteristic files for a universe folder."""
 
     if universe not in {"features500", "features"}:
         raise ValueError("universe must be 'features500' or 'features'")
@@ -77,46 +65,28 @@ def list_feature_files(universe: str = "features500", root: Path | None = None) 
     return sorted(feature_dir.glob("*.pkl"))
 
 
-def summarize_data_tree(root: Path | None = None) -> dict[str, Any]:
-    """Return lightweight filesystem metadata for the known data layout."""
+def summarize_data_tree(root: Path | None = None) -> pd.DataFrame:
+    """Return pandas filesystem metadata for the known data layout."""
 
     paths = get_project_paths(root)
-    data_dir = paths.data_dir
-    summary: dict[str, Any] = {
-        "data_dir": str(data_dir),
-        "known_files": {},
-        "feature_counts": {},
-    }
-
-    for name in EXPECTED_DATA_ROLES:
-        path = data_dir / name
-        if path.is_file():
-            summary["known_files"][name] = {"exists": True, "bytes": path.stat().st_size}
-        elif path.is_dir():
-            summary["known_files"][name] = {"exists": True, "type": "directory"}
-        else:
-            summary["known_files"][name] = {"exists": False}
-
-    for universe in ("features500", "features"):
-        files = list_feature_files(universe=universe, root=paths.root)
-        summary["feature_counts"][universe] = len(files)
-
-    return summary
+    records: list[dict[str, Any]] = []
+    for name, role in EXPECTED_DATA_ROLES.items():
+        path = paths.data_dir / name
+        files = list(path.glob("*.pkl")) if path.is_dir() else []
+        records.append(
+            {
+                "name": name,
+                "exists": path.exists(),
+                "kind": "directory" if path.is_dir() else "file" if path.is_file() else "missing",
+                "bytes": path.stat().st_size if path.is_file() else pd.NA,
+                "pkl_file_count": len(files) if path.is_dir() else pd.NA,
+                "role": role,
+            }
+        )
+    return pd.DataFrame.from_records(records)
 
 
 def load_pickle_table(path: Path) -> Any:
-    """Load a pickle-backed table with pandas.
-
-    This helper is intentionally small and dependency-light at import time.
-    Stage 2 should call it while documenting the loaded object's exact schema.
-    """
-
-    try:
-        import pandas as pd
-    except ModuleNotFoundError as exc:
-        raise RuntimeError(
-            "pandas is required to load project pickle files. "
-            "Install dependencies from requirements.txt first."
-        ) from exc
+    """Load a pickle-backed table with pandas."""
 
     return pd.read_pickle(path)

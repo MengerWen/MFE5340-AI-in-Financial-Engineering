@@ -1,13 +1,8 @@
-﻿"""Stage 1 data-loading entry point.
-
-Default behavior prints lightweight filesystem metadata. Use --load-pickle in
-Stage 2 only after installing requirements and choosing a file to inspect.
-"""
+﻿"""Pandas-based data tree inspection entry point."""
 
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
@@ -19,7 +14,7 @@ from src.data.loaders import load_pickle_table, summarize_data_tree
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Inspect project data locations.")
+    parser = argparse.ArgumentParser(description="Inspect project data locations with pandas.")
     parser.add_argument("--load-pickle", type=Path, help="Optional pickle path to load with pandas.")
     return parser.parse_args()
 
@@ -27,13 +22,16 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     if args.load_pickle is None:
-        print(json.dumps(summarize_data_tree(PROJECT_ROOT), indent=2, ensure_ascii=False))
+        summary = summarize_data_tree(PROJECT_ROOT)
+        print(summary.to_string(index=False))
         return
 
     obj = load_pickle_table(args.load_pickle)
     print(type(obj).__name__)
     if hasattr(obj, "shape"):
         print(f"shape={obj.shape}")
+    if hasattr(obj, "head"):
+        print(obj.head().to_string())
 
 
 if __name__ == "__main__":
