@@ -24,8 +24,9 @@ BENCHMARKS: tuple[BenchmarkSpec, ...] = (
     BenchmarkSpec("ipca_style", "linear latent factor", False, "conditional beta benchmark", "sklearn/numpy", "IPCAStyleBenchmark"),
     BenchmarkSpec("conditional_autoencoder_style", "nonlinear latent factor", False, "nonlinear conditional beta benchmark", "torch", "CAEStyleBenchmark"),
     BenchmarkSpec("mlp_predictor", "direct prediction", False, "non-graph nonlinear prediction benchmark", "torch", "MLPReturnPredictor"),
-    BenchmarkSpec("gcn_latent_factor", "graph latent factor", True, "graph-enhanced conditional beta model", "torch_geometric", "GraphConditionalEncoder(model_type='gcn')"),
-    BenchmarkSpec("gat_latent_factor", "graph latent factor", True, "attention-based graph conditional beta model", "torch_geometric", "GraphConditionalEncoder(model_type='gat')"),
+    BenchmarkSpec("graph_conditional_latent_factor", "graph latent factor", True, "graph-enhanced conditional beta model", "torch_geometric", "GraphConditionalLatentFactorModel"),
+    BenchmarkSpec("gcn_latent_factor", "graph latent factor", True, "graph-enhanced conditional beta variant", "torch_geometric", "GraphConditionalLatentFactorModel(model_type='gcn')"),
+    BenchmarkSpec("gat_latent_factor", "graph latent factor", True, "attention-based graph conditional beta variant", "torch_geometric", "GraphConditionalLatentFactorModel(model_type='gat')"),
 )
 
 
@@ -49,4 +50,3 @@ class BenchmarkModel(BaseEstimator):
 
     def predict(self, *_args: object, **_kwargs: object) -> object:
         raise NotImplementedError("Prediction is reserved for the modeling stage.")
-
