@@ -61,20 +61,20 @@ A GAT robustness run was also completed, so attention-weight summaries are avail
 Focused graph robustness checks were run on a small number of variants that stay close to the implemented pipeline.
 
 - `graph_main_diagnostic`: OOS R^2 -0.0111, rank IC 0.0374, CS corr 0.0431, pricing RMSE 0.0488
-- `graph_return_only`: OOS R^2 -0.0069, rank IC 0.0230, CS corr 0.0246, pricing RMSE 0.0483
+- `graph_return_only`: OOS R^2 -0.0069, rank IC 0.0230, CS corr 0.0245, pricing RMSE 0.0483
 - `graph_conditional_latent_factor_static_test_graph`: OOS R^2 -0.0452, rank IC 0.0017, CS corr 0.0021, pricing RMSE 0.0496
 - `graph_latent_k5`: OOS R^2 -0.0150, rank IC -0.0087, CS corr -0.0002, pricing RMSE 0.0489
 - `graph_lookback6`: OOS R^2 -0.0054, rank IC -0.0170, CS corr -0.0145, pricing RMSE 0.0480
-- `graph_gat_hybrid`: OOS R^2 -0.0092, rank IC -0.0241, CS corr -0.0012, pricing RMSE 0.0485
+- `graph_gat_hybrid`: OOS R^2 -0.0115, rank IC -0.0466, CS corr -0.0208, pricing RMSE 0.0486
 
 Selected portfolio robustness diagnostics:
 
 - `graph_main_diagnostic`: long-only value Sharpe 1.1794, long-short equal Sharpe 0.6536
-- `graph_return_only`: long-only value Sharpe 0.8576, long-short equal Sharpe 0.4353
+- `graph_return_only`: long-only value Sharpe 0.8576, long-short equal Sharpe 0.5070
 - `graph_latent_k5`: long-only value Sharpe 0.3493, long-short equal Sharpe -0.3712
 - `graph_lookback6`: long-only value Sharpe 0.2669, long-short equal Sharpe -1.0290
 - `graph_conditional_latent_factor_static_test_graph`: long-only value Sharpe 0.1649, long-short equal Sharpe -0.5471
-- `graph_gat_hybrid`: long-only value Sharpe 0.1238, long-short equal Sharpe -0.9065
+- `graph_gat_hybrid`: long-only value Sharpe -0.1400, long-short equal Sharpe -1.2869
 
 Implemented robustness variants:
 
