@@ -47,6 +47,8 @@ Run these from `Final Project/`:
 & "d:\MG\anaconda3\python.exe" scripts/evaluate_model_comparison.py --config configs/evaluation_features500.yaml
 & "d:\MG\anaconda3\python.exe" scripts/train.py
 & "d:\MG\anaconda3\python.exe" scripts/backtest_portfolio.py --config configs/portfolio_features500.yaml
+& "d:\MG\anaconda3\python.exe" scripts/run_stage8_analysis.py --config configs/stage8_features500.yaml
+& "d:\MG\anaconda3\python.exe" scripts/generate_report_figures.py --config configs/report_figures.yaml
 ```
 
 `inspect_data.py` and `build_panel.py` are the main Stage 2 data commands. `train_benchmarks.py` is the Stage 3 non-graph benchmark command for MLP, IPCA-style, and CAE-style models. `build_graph.py` is the Stage 4 monthly similarity graph construction command. `train_graph_model.py` is the Stage 5 graph-enhanced conditional latent factor training command. `evaluate_model_comparison.py` is the Stage 6 unified comparison command. `backtest_portfolio.py` is the Stage 7 monthly OOS portfolio backtest command. `train.py` still exposes reusable training helpers for later extensions.
@@ -113,6 +115,19 @@ The Stage 7 portfolio runner writes:
 - `outputs/portfolio/stage7_plots/stage7_summary_bars_10bps.png`
 - `outputs/metadata/stage7_portfolio_metadata.json`
 - `reports/stage7_portfolio_results.md`
+
+The report-figure pipeline writes:
+
+- `reports/figures/figure_1_sample_coverage.png`
+- `reports/figures/figure_2_graph_overview.png`
+- `reports/figures/figure_3_model_comparison.png`
+- `reports/figures/figure_4_portfolio_cumulative.png`
+- `reports/figures/figure_5_portfolio_summary.png`
+- `reports/figures/figure_6_interpretability.png`
+- `reports/figures/figure_7_graph_robustness.png`
+- `reports/figures/figure_8_gat_attention_exploratory.png` when the Stage 8 GAT summary is non-empty
+- `reports/figure_guide.md`
+
 
 ## Panel Logic
 
