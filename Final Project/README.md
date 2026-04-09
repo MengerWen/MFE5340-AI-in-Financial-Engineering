@@ -44,11 +44,12 @@ Run these from `Final Project/`:
 & "d:\MG\anaconda3\python.exe" scripts/train_benchmarks.py --config configs/benchmarks_features500.yaml
 & "d:\MG\anaconda3\python.exe" scripts/build_graph.py --config configs/graphs_features500.yaml
 & "d:\MG\anaconda3\python.exe" scripts/train_graph_model.py --config configs/graph_model_features500.yaml
+& "d:\MG\anaconda3\python.exe" scripts/evaluate_model_comparison.py --config configs/evaluation_features500.yaml
 & "d:\MG\anaconda3\python.exe" scripts/train.py
 & "d:\MG\anaconda3\python.exe" scripts/backtest_portfolio.py
 ```
 
-`inspect_data.py` and `build_panel.py` are the main Stage 2 data commands. `train_benchmarks.py` is the Stage 3 non-graph benchmark command for MLP, IPCA-style, and CAE-style models. `build_graph.py` is the Stage 4 monthly similarity graph construction command. `train_graph_model.py` is the Stage 5 graph-enhanced conditional latent factor training command. `train.py` and `backtest_portfolio.py` currently validate configs and expose reusable helper modules; portfolio backtesting is reserved for later stages.
+`inspect_data.py` and `build_panel.py` are the main Stage 2 data commands. `train_benchmarks.py` is the Stage 3 non-graph benchmark command for MLP, IPCA-style, and CAE-style models. `build_graph.py` is the Stage 4 monthly similarity graph construction command. `train_graph_model.py` is the Stage 5 graph-enhanced conditional latent factor training command. `evaluate_model_comparison.py` is the Stage 6 unified comparison command. `train.py` and `backtest_portfolio.py` currently validate configs and expose reusable helper modules; portfolio backtesting is reserved for later stages.
 
 The panel builder writes:
 
@@ -85,11 +86,25 @@ The Stage 5 graph model runner writes:
 - `outputs/metadata/stage5_graph_model_metadata.json`
 - `reports/graph_model_architecture_stage5.md`
 
+The Stage 6 comparison runner writes:
+
+- `outputs/comparison/stage6_tables/stage6_summary_metrics.csv`
+- `outputs/comparison/stage6_tables/stage6_monthly_metrics.csv`
+- `outputs/comparison/stage6_tables/stage6_latent_diagnostics.csv`
+- `outputs/comparison/stage6_tables/stage6_prediction_correlation.csv`
+- `outputs/comparison/stage6_plots/stage6_overall_metric_bars.png`
+- `outputs/comparison/stage6_plots/stage6_monthly_rank_ic.png`
+- `outputs/comparison/stage6_plots/stage6_monthly_cross_sectional_corr.png`
+- `outputs/comparison/stage6_plots/stage6_prediction_correlation_heatmap.png`
+- `outputs/metadata/stage6_comparison_metadata.json`
+- `reports/stage6_model_comparison.md`
+
 ## Panel Logic
 
 The main-spec panel uses `features500/`, CSI 500 membership at month `t`, and next-month returns from `monthly_returns.pkl` as the target. `target_excess_return` subtracts the compounded daily risk-free return over month `t + 1`.
 
 Feature cleaning uses pandas/numpy operations by month: robust clipping, cross-sectional median imputation, and cross-sectional normalization. Graph utilities can convert return-correlation kNN edges into networkx graphs and torch_geometric `Data` objects. Torch utilities set reproducible seeds, select CUDA when available, and prepare TensorBoard logging.
+
 
 
 
