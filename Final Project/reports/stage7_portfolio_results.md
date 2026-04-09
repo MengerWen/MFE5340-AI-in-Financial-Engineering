@@ -1,4 +1,4 @@
-﻿# Stage 7 Portfolio Results
+# Stage 7 Portfolio Results
 
 ## Scope
 
@@ -37,7 +37,7 @@ If the graph model outperforms, the current evidence should be interpreted mainl
 
 Long-short portfolios isolate cross-sectional sorting ability most directly. Long-only portfolios are more sensitive to whether the top-ranked names are robust enough to survive realistic weighting and costs.
 
-In this stage, the right question is not only "which model has the highest return," but also:
+In this stage, the right question is not only “which model has the highest return,” but also:
 
 - whether the return comes with better Sharpe or just higher volatility,
 - whether value weighting changes the ranking of models,
@@ -62,4 +62,3 @@ In this stage, the right question is not only "which model has the highest retur
 5. Transaction costs are only sensitivity adjustments, not a full microstructure model.
 6. Because Stage 2 already filtered the main panel for feasibility, the raw blacklist/untradable overlays may have limited incremental effect in the default run.
 7. There is still no broader-spec `features/` comparison in this stage.
-
