@@ -36,8 +36,15 @@
     },
     "reports": {
       "path": "reports",
-      "png_count": 0,
-      "examples": []
+      "png_count": 8,
+      "examples": [
+        "reports/figures/figure_1_sample_coverage.png",
+        "reports/figures/figure_2_graph_overview.png",
+        "reports/figures/figure_3_model_comparison.png",
+        "reports/figures/figure_4_portfolio_cumulative.png",
+        "reports/figures/figure_5_portfolio_summary.png",
+        "reports/figures/figure_6_interpretability.png"
+      ]
     },
     "missing_before_this_stage": [
       "Git-tracked report figure package under reports/figures/",

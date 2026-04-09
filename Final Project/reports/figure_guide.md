@@ -14,7 +14,10 @@
   - Example: `outputs/stage8/plots/portfolio_robustness/stage7_cumulative_long_only_equal_10bps.png`
   - Example: `outputs/stage8/plots/portfolio_robustness/stage7_cumulative_long_only_value_10bps.png`
   - Example: `outputs/stage8/plots/portfolio_robustness/stage7_cumulative_long_short_equal_10bps.png`
-- `reports`: 0 PNG files found under `reports`.
+- `reports`: 8 PNG files found under `reports`.
+  - Example: `reports/figures/figure_1_sample_coverage.png`
+  - Example: `reports/figures/figure_2_graph_overview.png`
+  - Example: `reports/figures/figure_3_model_comparison.png`
 
 ## Important Gaps Before This Stage
 
