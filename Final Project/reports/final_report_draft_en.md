@@ -5,8 +5,8 @@
 Course: MFE5340 AI in Financial Engineering  
 Project integration draft: Stage 1 to Stage 8  
 Report language: English draft  
-Author(s): __________  
-Submission note: This document consolidates the project protocol, stage reports, result tables, and report figures into a single final-report draft. For a two-person group, section-level author labels can be filled in before submission.
+Author: Menger Wen
+Submission note: This document consolidates the project protocol, stage reports, result tables, and report figures into a single final-report draft.
 
 ## Abstract
 
@@ -20,8 +20,6 @@ Graph neural networks; asset pricing; conditional latent factor models; Chinese 
 
 ## 1. Introduction
 
-Section author: __________
-
 One of the main promises of machine learning in quantitative investment is that it can exploit nonlinear structure in high-dimensional firm characteristics and improve out-of-sample performance relative to traditional linear factor models. Yet many cross-sectional stock prediction frameworks still treat each stock as an independent observation. In practice, this assumption is too restrictive. Stocks move together through industry linkages, style co-movement, liquidity spillovers, common ownership, and crowded trading. If such dependence is economically meaningful, then a model that only looks at each stock in isolation may miss part of the information relevant for time-varying risk exposures.
 
 This project therefore focuses on a more asset-pricing-oriented question: can graph structure improve conditional latent factor models by enhancing the exposure function rather than by replacing it with a purely black-box predictor? Instead of asking whether a graph model can forecast returns directly, the project asks whether graph context can sharpen the mapping from stock characteristics to conditional betas, and whether that improvement translates into better out-of-sample prediction diagnostics, better pricing diagnostics, and stronger portfolio performance.
@@ -30,8 +28,6 @@ The project makes four contributions. First, it builds a unified point-in-time m
 
 ## 2. Related Literature and Project Positioning
 
-Section author: __________
-
 The project sits at the intersection of conditional asset pricing, machine-learning-based return modeling, and graph-based representation learning. The first relevant literature stream is Instrumented PCA (IPCA), which shows that firm characteristics can serve as instruments for time-varying factor loadings. This framework is especially important because it reframes firm characteristics as inputs to dynamic exposure estimation rather than as direct return predictors. The second stream is the conditional autoencoder and related deep asset-pricing literature, which demonstrates that the mapping from characteristics to conditional betas need not be linear. The third stream is the latent-factor pricing literature that emphasizes economic targets, such as pricing error minimization, instead of focusing exclusively on statistical variance decomposition. The fourth stream is the emerging graph-finance literature, which brings stock interaction structure into prediction and pricing models.
 
 Despite this progress, two gaps remain. First, many graph-based finance papers focus on return prediction, but do not explicitly formulate graph information as an input to conditional beta estimation. Second, many conditional latent factor models remain characteristic-only models, meaning they do not directly encode cross-sectional stock relationships. This project addresses both gaps by embedding graph context inside the exposure function of a latent factor pricing system.
@@ -39,8 +35,6 @@ Despite this progress, two gaps remain. First, many graph-based finance papers f
 Put differently, the goal here is not to prove that "GNNs predict stock returns better." The goal is to test whether graph context improves conditional exposure learning enough to matter for out-of-sample pricing and portfolio construction. This positioning is important because it determines the architecture used later: the graph model outputs exposures, not just return scores.
 
 ## 3. Data, Sample Construction, and Feature Engineering
-
-Section author: __________
 
 The project uses the course-provided local dataset. The main inputs are monthly stock returns from `monthly_returns.pkl`, monthly market capitalization from `mcap.pkl`, a daily risk-free series from `risk_free.csv`, daily blacklist and untradable flags from `BLACKLIST.pkl` and `UNTRADABLE.pkl`, the monthly CSI 500 mask from `csi500_mask_monthly.pkl`, and a large library of precomputed monthly firm characteristics stored in wide-format `.pkl` files. The main specification uses `features500/`, which is consistent with the CSI 500 universe and helps control computational complexity.
 
@@ -70,8 +64,6 @@ Relative to the guideline's recommendation to conduct feature selection before m
 Figure 1 makes two points clear. First, the cross-section is large enough each month to support meaningful monthly ranking exercises. Second, some economically interesting feature families, especially analyst- and R&D-related variables, are sparse in raw form. This is exactly why Stage 2 is not a trivial data-loading step, but a substantive part of the research design.
 
 ## 4. Methodology
-
-Section author: __________
 
 ### 4.1 Out-of-sample protocol
 
@@ -132,15 +124,11 @@ The default main result uses a compact two-layer GCN beta encoder. During traini
 
 ## 5. Evaluation Metrics and Portfolio Design
 
-Section author: __________
-
 The project evaluates models from three complementary angles. First, prediction quality is measured using OOS R^2, mean squared error, rank IC, and cross-sectional correlation. OOS R^2 captures predictive fit relative to a zero benchmark, while rank IC and cross-sectional correlation focus more directly on cross-sectional ordering. Second, pricing quality is assessed through monthly pricing error diagnostics, including average pricing error and pricing-error RMSE. Third, economic value is measured through investable portfolio tests, which are explicitly required by the course guideline.
 
 Portfolio construction follows the standard signal-at-`t`, return-at-`t+1` protocol. At the end of month `t`, model scores are used to sort stocks into top and bottom deciles. The long-short strategy goes long the top decile and short the bottom decile; the long-only strategy holds the top decile only. Both equal-weight and value-weight implementations are reported. Although transaction costs could have been ignored under the course guideline, the project includes 0, 10, and 25 bps settings as a useful sensitivity check. The main report focuses on the 10 bps setting because it is a reasonable compromise between academic simplicity and practical awareness.
 
 ## 6. Empirical Results
-
-Section author: __________
 
 ### 6.1 Benchmark comparison
 
@@ -221,8 +209,6 @@ The project also produces an exploratory GAT attention figure. Because the main 
 
 ## 7. Discussion
 
-Section author: __________
-
 Taken together, the results suggest that graph structure adds value mainly by improving cross-sectional ordering and implementable long-only portfolio outcomes. Relative to the CAE-style benchmark, the graph model clearly improves rank-based diagnostics. Relative to IPCA-style, it remains competitive on ranking but not on all statistical pricing metrics. Relative to the MLP, it offers a far more interpretable asset-pricing structure with substantially better OOS R^2, even though it does not match the MLP's top rank-IC score.
 
 This means the most appropriate conclusion is not that the graph model is universally best. Rather, the graph model appears to provide a meaningful but selective improvement inside an asset-pricing-oriented framework. Its strongest benefit is that it helps identify better top-ranked stocks for long-only portfolio formation. That is already economically meaningful, but it is not the same as proving a complete benchmark victory.
@@ -231,23 +217,17 @@ This interpretation is also consistent with the difference between the initial p
 
 ## 8. Limitations
 
-Section author: __________
-
 At least five limitations should be emphasized. First, the aligned default OOS window is short, covering only 24 months. This limits the statistical strength of the final comparison. Second, feature selection is conservative: the project filters on extreme missingness but does not perform aggressive feature screening or dimensionality reduction before training. Third, the graph model remains a compact first-pass latent-factor system rather than a stronger no-arbitrage structural model with macro states or dedicated factor forecasting. Fourth, the stored dataset does not contain point-in-time industry labels, so the graph is similarity-based rather than the intended industry-plus-similarity hybrid envisioned in the proposal. Fifth, some Stage 8 interpretability diagnostics rely on a focused rerun because earlier stages did not save all checkpoints by default.
 
 These limitations do not invalidate the main findings, but they do imply that the project should be presented as a well-executed first empirical study rather than as a fully mature research paper with every design choice exhausted.
 
 ## 9. Conclusion
 
-Section author: __________
-
 This project develops and evaluates a graph-enhanced conditional latent factor pricing pipeline for the Chinese equity cross-section. Starting from a carefully cleaned monthly panel, it compares characteristic-only benchmarks with a graph-aware latent-factor model under a disciplined out-of-sample protocol, and then evaluates the models through prediction, pricing, and portfolio criteria. The main finding is that graph structure provides meaningful incremental value, especially in rank-based diagnostics and long-only portfolio performance, even though it does not dominate every benchmark on every metric.
 
 The strongest empirical result is the graph model's long-only value-weight portfolio, which achieves an annualized return of 20.98% and a Sharpe ratio of 1.1794 under the main cost setting. This suggests that graph-enhanced exposure learning can improve the quality of top-ranked stocks in an economically relevant way. At the same time, the remaining benchmark competition, especially from IPCA-style in OOS R^2 and long-short Sharpe, shows that the graph advantage is partial rather than universal. The most defensible final answer is therefore that graph context improves conditional latent factor learning in meaningful ways, but further work is needed to turn that incremental advantage into a more decisive all-around improvement.
 
 ## References (draft)
-
-Section author: __________
 
 1. Kelly, B., Pruitt, S., and Su, Y. (2019). Instrumented principal component analysis. *Journal of Financial Economics*.
 2. Gu, S., Kelly, B., and Xiu, D. (2021). Autoencoder asset pricing models. *Journal of Econometrics*.
