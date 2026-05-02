@@ -49,6 +49,7 @@ Run these from `Final Project/`:
 & "d:\MG\anaconda3\python.exe" scripts/backtest_portfolio.py --config configs/portfolio_features500.yaml
 & "d:\MG\anaconda3\python.exe" scripts/run_stage8_analysis.py --config configs/stage8_features500.yaml
 & "d:\MG\anaconda3\python.exe" scripts/generate_report_figures.py --config configs/report_figures.yaml
+& "d:\MG\anaconda3\python.exe" scripts/run_industry_extension.py --config configs/industry_extension_features500.yaml
 ```
 
 `inspect_data.py` and `build_panel.py` are the main Stage 2 data commands. `train_benchmarks.py` is the Stage 3 non-graph benchmark command for MLP, IPCA-style, and CAE-style models. `build_graph.py` is the Stage 4 monthly similarity graph construction command. `train_graph_model.py` is the Stage 5 graph-enhanced conditional latent factor training command. `evaluate_model_comparison.py` is the Stage 6 unified comparison command. `backtest_portfolio.py` is the Stage 7 monthly OOS portfolio backtest command. `train.py` still exposes reusable training helpers for later extensions.
@@ -127,6 +128,18 @@ The report-figure pipeline writes:
 - `reports/figures/figure_7_graph_robustness.png`
 - `reports/figures/figure_8_gat_attention_exploratory.png` when the Stage 8 GAT summary is non-empty
 - `reports/figure_guide.md`
+
+The additive industry-classification extension writes, without replacing the original Stage 3-8 artifacts:
+
+- `outputs/industry_extension/graphs/industry_only/`
+- `outputs/industry_extension/graphs/hybrid_plus_industry/`
+- `outputs/industry_extension/predictions/graph_industry_only.pkl`
+- `outputs/industry_extension/predictions/graph_industry_hybrid.pkl`
+- `outputs/industry_extension/tables/industry_model_comparison.csv`
+- `outputs/industry_extension/tables/industry_portfolio_summary.csv`
+- `reports/industry_extension_results.md`
+- `reports/figures/figure_9_industry_graph_extension.png`
+- `reports/figures/figure_10_industry_portfolio_extension.png`
 
 
 ## Panel Logic

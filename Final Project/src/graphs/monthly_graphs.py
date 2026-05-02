@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import json
 import os
 import time
@@ -21,7 +22,7 @@ from sklearn.preprocessing import normalize
 
 from src.graphs.build_graph import edges_to_pyg_data
 
-INDUSTRY_SEARCH_TERMS = ("industry", "sector", "class", "classification", "citic", "sw", "申万", "中信")
+INDUSTRY_SEARCH_TERMS = ("industry", "sector", "class", "classification", "citic", "sw", "ind_code", "申万", "中信")
 
 
 @dataclass(frozen=True)
@@ -39,6 +40,9 @@ class MonthlyGraphConfig:
     combine_rule: str
     save_pyg: bool
     max_months: int | None
+    industry_label_path: str | None
+    industry_edge_weight: float
+    industry_min_group_size: int
 
 
 def load_yaml_config(config_path: Path) -> dict[str, Any]:
@@ -77,8 +81,9 @@ def parse_graph_config(config: dict[str, Any]) -> MonthlyGraphConfig:
     unknown = sorted(set(edge_types) - allowed)
     if unknown:
         raise ValueError(f"unknown graph edge types: {unknown}")
-    if "industry" in edge_types and not graph.get("allow_missing_industry", False):
-        raise ValueError("industry edges requested, but no industry labels are available in the current dataset")
+    industry_label_path = graph.get("industry_label_path") or config.get("data", {}).get("industry_label_path")
+    if "industry" in edge_types and not industry_label_path and not graph.get("allow_missing_industry", False):
+        raise ValueError("industry edges requested; set graph.industry_label_path or data.industry_label_path")
 
     return MonthlyGraphConfig(
         edge_types=edge_types,
@@ -92,12 +97,55 @@ def parse_graph_config(config: dict[str, Any]) -> MonthlyGraphConfig:
         combine_rule=str(graph.get("combine_rule", "mean")),
         save_pyg=bool(graph.get("save_pyg", True)),
         max_months=graph.get("max_months"),
+        industry_label_path=str(industry_label_path) if industry_label_path else None,
+        industry_edge_weight=float(graph.get("industry_edge_weight", 1.0)),
+        industry_min_group_size=int(graph.get("industry_min_group_size", 2)),
     )
 
 
-def inspect_industry_availability(project_root: Path, panel: pd.DataFrame) -> dict[str, Any]:
+def _clean_industry_code_values(values: pd.Series) -> pd.Series:
+    """Normalize raw industry labels to stable string codes."""
+
+    numeric = pd.to_numeric(values, errors="coerce")
+    if numeric.notna().all():
+        return numeric.astype("Int64").astype(str)
+    return values.astype(str).str.strip()
+
+
+def load_industry_labels(project_root: Path, industry_label_path: str | Path | None) -> pd.Series | None:
+    """Load static stock-level industry labels indexed by stock id."""
+
+    if not industry_label_path:
+        return None
+    path = resolve_project_path(project_root, industry_label_path)
+    raw = pd.read_pickle(path)
+    if isinstance(raw, pd.Series):
+        labels = raw.copy()
+        labels.index = labels.index.astype(str)
+        labels.index.name = "stock_id"
+        labels = labels.dropna()
+        labels = _clean_industry_code_values(labels)
+    elif isinstance(raw, pd.DataFrame):
+        frame = raw.copy()
+        stock_candidates = [col for col in ["stock_id", "order_book_id", "asset", "ticker"] if col in frame.columns]
+        industry_candidates = [col for col in ["industry_code", "first_industry_code", "industry", "sector"] if col in frame.columns]
+        if not stock_candidates or not industry_candidates:
+            raise ValueError(f"could not infer stock and industry columns from {path}")
+        labels = frame.set_index(stock_candidates[0])[industry_candidates[0]].dropna()
+        labels.index = labels.index.astype(str)
+        labels.index.name = "stock_id"
+        labels = _clean_industry_code_values(labels)
+    else:
+        raise TypeError(f"unsupported industry label object type in {path}: {type(raw).__name__}")
+    labels.name = "industry_code"
+    return labels
+
+
+def inspect_industry_availability(project_root: Path, panel: pd.DataFrame, config: dict[str, Any] | None = None) -> dict[str, Any]:
     """Check whether explicit industry/sector labels are present in stored data."""
 
+    config = config or {}
+    configured_path = config.get("graph", {}).get("industry_label_path") or config.get("data", {}).get("industry_label_path")
     data_dir = project_root / "data"
     matching_data_files = [
         path.relative_to(project_root).as_posix()
@@ -124,13 +172,34 @@ def inspect_industry_availability(project_root: Path, panel: pd.DataFrame) -> di
         except Exception as exc:  # pragma: no cover - defensive inspection branch
             hdf_price_columns = [f"price.h5 inspection failed: {type(exc).__name__}: {exc}"]
 
-    available = bool(matching_data_files or matching_panel_columns or matching_feature_files or hdf_price_columns)
+    configured_audit: dict[str, Any] = {}
+    if configured_path:
+        labels = load_industry_labels(project_root, configured_path)
+        if labels is not None:
+            panel_stocks = pd.Index(panel["stock_id"].astype(str).unique())
+            covered_stocks = int(panel_stocks.isin(labels.index).sum())
+            row_coverage = panel["stock_id"].astype(str).isin(labels.index)
+            configured_audit = {
+                "configured_industry_label_path": project_relative_string(project_root, resolve_project_path(project_root, configured_path)),
+                "label_object": "Series or DataFrame normalized to stock_id -> industry_code",
+                "label_rows": int(labels.shape[0]),
+                "unique_industries": int(labels.nunique()),
+                "covered_panel_stocks": covered_stocks,
+                "panel_unique_stocks": int(panel_stocks.shape[0]),
+                "stock_coverage_ratio": float(covered_stocks / panel_stocks.shape[0]) if panel_stocks.shape[0] else np.nan,
+                "covered_panel_rows": int(row_coverage.sum()),
+                "panel_rows": int(panel.shape[0]),
+                "row_coverage_ratio": float(row_coverage.mean()) if len(row_coverage) else np.nan,
+            }
+
+    available = bool(configured_audit or matching_data_files or matching_panel_columns or matching_feature_files or hdf_price_columns)
     return {
         "explicit_industry_labels_available": available,
         "matching_data_files": matching_data_files,
         "matching_panel_columns": matching_panel_columns,
         "matching_feature_files": matching_feature_files,
         "matching_price_columns": hdf_price_columns,
+        "configured_industry_audit": configured_audit,
         "conclusion": "No explicit industry/sector labels found in stored Stage 4 inputs." if not available else "Potential industry fields found; inspect before use.",
     }
 
@@ -282,6 +351,40 @@ def feature_knn_edges(
     return _dedupe_edges(pd.DataFrame.from_records(records, columns=["source", "target", "edge_type", "weight", "distance"]))
 
 
+def industry_edges(
+    stocks: list[str],
+    industry_labels: pd.Series | None,
+    edge_weight: float,
+    min_group_size: int,
+) -> pd.DataFrame:
+    """Build static same-industry clique edges for the current stock universe."""
+
+    if industry_labels is None:
+        return pd.DataFrame(columns=["source", "target", "edge_type", "weight", "distance"])
+    label_frame = pd.DataFrame({"stock_id": stocks})
+    label_frame["industry_code"] = label_frame["stock_id"].map(industry_labels)
+    label_frame = label_frame.dropna(subset=["industry_code"])
+    if label_frame.empty:
+        return pd.DataFrame(columns=["source", "target", "edge_type", "weight", "distance"])
+
+    records: list[dict[str, Any]] = []
+    for _industry_code, group in label_frame.groupby("industry_code", sort=True):
+        members = sorted(group["stock_id"].astype(str).tolist())
+        if len(members) < min_group_size:
+            continue
+        for source, target in itertools.combinations(members, 2):
+            records.append(
+                {
+                    "source": source,
+                    "target": target,
+                    "edge_type": "industry",
+                    "weight": float(edge_weight),
+                    "distance": float(1.0 - edge_weight),
+                }
+            )
+    return _dedupe_edges(pd.DataFrame.from_records(records, columns=["source", "target", "edge_type", "weight", "distance"]))
+
+
 def combine_edges(edges: pd.DataFrame, combine_rule: str) -> pd.DataFrame:
     """Combine multiple edge types into one homogeneous graph for first-pass GNN use."""
 
@@ -340,6 +443,7 @@ def build_graph_for_month(
     feature_cols: list[str],
     graph_config: MonthlyGraphConfig,
     config: dict[str, Any],
+    industry_labels: pd.Series | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Build typed edges, combined edges, node features, and stats for one month."""
 
@@ -354,6 +458,8 @@ def build_graph_for_month(
         edge_frames.append(feature_knn_edges(filtered, feature_cols, "feature_cosine_knn", graph_config.k_feature_cosine, "cosine", graph_config.min_edge_weight))
     if "feature_euclidean_knn" in graph_config.edge_types:
         edge_frames.append(feature_knn_edges(filtered, feature_cols, "feature_euclidean_knn", graph_config.k_feature_euclidean, "euclidean", graph_config.min_edge_weight))
+    if "industry" in graph_config.edge_types:
+        edge_frames.append(industry_edges(stocks, industry_labels, graph_config.industry_edge_weight, graph_config.industry_min_group_size))
 
     typed_edges = pd.concat(edge_frames, ignore_index=True) if edge_frames else pd.DataFrame(columns=["source", "target", "edge_type", "weight", "distance"])
     combined_edges = combine_edges(typed_edges, graph_config.combine_rule)
@@ -369,11 +475,14 @@ def run_stage4_graph_construction(config_path: Path, project_root: Path) -> dict
     config = load_yaml_config(config_path)
     graph_config = parse_graph_config(config)
     panel, returns, panel_metadata, feature_cols = load_stage4_inputs(project_root, config)
-    industry_audit = inspect_industry_availability(project_root, panel)
+    industry_labels = load_industry_labels(project_root, graph_config.industry_label_path)
+    industry_audit = inspect_industry_availability(project_root, panel, config)
     if industry_audit["explicit_industry_labels_available"]:
         print("Potential industry labels found; inspect audit before enabling industry edges.")
     else:
         print("No explicit industry labels found. Stage 4 will build similarity-based graphs only.")
+    if "industry" in graph_config.edge_types and industry_labels is None:
+        raise ValueError("industry edges requested, but no industry labels were loaded")
 
     output_config = config.get("outputs", {})
     graph_dir = resolve_project_path(project_root, output_config.get("graph_dir", "outputs/graphs/features500_similarity"))
@@ -393,7 +502,7 @@ def run_stage4_graph_construction(config_path: Path, project_root: Path) -> dict
     manifest_rows: list[dict[str, Any]] = []
     for month in months:
         month_frame = panel.loc[panel["date"] == month].copy()
-        typed_edges, combined_edges, node_features, stats = build_graph_for_month(month_frame, returns, feature_cols, graph_config, config)
+        typed_edges, combined_edges, node_features, stats = build_graph_for_month(month_frame, returns, feature_cols, graph_config, config, industry_labels=industry_labels)
         month_name = _month_filename(month)
         edges_path = edges_dir / f"{month_name}_edges.pkl"
         pyg_path = pyg_dir / f"{month_name}.pt"
